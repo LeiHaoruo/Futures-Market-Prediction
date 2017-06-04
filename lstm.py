@@ -5,7 +5,7 @@ from keras.layers.recurrent import LSTM
 import numpy as np
 import data_proc
 
-def trainModel(X_train,Y_train,X_test,Y_test):
+def lstm_train(X_train,Y_train,X_test,Y_test):
 	model = Sequential()
 	#model.add(Embedding(max_features, 256, input_length=maxlen))
 	model.add(LSTM(128, input_shape=(20,12)))
@@ -21,4 +21,4 @@ def trainModel(X_train,Y_train,X_test,Y_test):
 
 if __name__=='__main__':
 	x_train,y_train,x_test,y_test = data_proc.load_data('TK_m0000[s20170404 00205000_e20170414 00153000]20170410_1755_46.csv')
-	trainModel(x_train,y_train,x_test,y_test)
+	lstm_train(x_train,y_train,x_test,y_test)
