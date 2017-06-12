@@ -71,7 +71,7 @@ def load_data(path,no_separate):
 	#x_ = mm_scaler.fit_transform(x_)	
 	#x_ = st_scaler.transform(x_)
 	#x_ = np.reshape(x_, (x_.shape[0]/20,20,x_.shape[1]))
-	train_size = int(len(x_)*0.8)
+	train_size = int(len(x_)*1)
 	if no_separate:
 	    return x_,y_,None,None
 	x_train = x_[0:train_size]
@@ -81,7 +81,46 @@ def load_data(path,no_separate):
 	
 	return x_train,y_train,x_test,y_test
 
-def load_data_grouped(path):
+def generator_from_path_group(path,file_set,svm=False,test=False):
+    steps = 32
+    steps_2=500
+    count = 0
+    prefix_inx = 1
+    f_csv_list = []
+    for parent, dirnames, filenames in os.walk(path):
+        for p_inx in file_set:
+	    for f in filenames:
+		if f[f.rfind('_')+1:f.rfind('.')]==str(p_inx) and f.find('TK')>=0:
+	            f_csv_list.append(f)
+	print f_csv_list
+
+	if test == True:
+		for f_csv in f_csv_list:
+			print "reading file: "+f_csv
+			X,Y,x_none,y_none = load_data_grouped(path+f_csv,True)
+			print "processing file: "+f_csv
+			yield(np.array(X),np.array(Y))
+
+	elif svm == True:
+		for f_csv in f_csv_list:
+			print "reading file: "+f_csv
+			X,Y,x_none,y_none = load_data_grouped(path+f_csv,True)
+			print "processing file: "+f_csv
+			for i in range(0,Y.shape[0]-steps_2,steps_2):
+				yield(np.array(X[i:i+steps_2]),np.array(Y[i:i+steps_2]))
+
+	else:		
+		while 1:
+		    for f_csv in f_csv_list:
+		        print "reading file: "+f_csv
+		        X,Y,x_none,y_none = load_data_grouped(path+f_csv,True)
+		        print "processing file: "+f_csv
+		        for i in range(0,Y.shape[0]-steps,steps):
+		            yield(X[i:i+steps],Y[i:i+steps])
+		
+
+
+def load_data_grouped(path,no_separate):
 	df = pd.read_csv(path)
 	for i in range(len(is_drop)):
 		if(is_drop[i]==1):
@@ -89,20 +128,25 @@ def load_data_grouped(path):
 	df['PredictPrice']=(df['AskPrice1']+df['BidPrice1'])
 	data = df.values
 	data_ = np.delete(data,-1,axis=1)
-	x_ = np.ravel(data_[0:TimeSlice])
-	label= get_label(data,TimeSlice)
-	y_ = np.array([label])
-	for i in range(TimeSlice,len(data)-TimeSlice,TimeSlice):
-		features = np.ravel(data_[i:i+TimeSlice])
-		x_= np.vstack((x_,features))
-		label= get_label(data,i+TimeSlice)
-		y_ = np.append(y_,label)
-	
-	mm_scaler = preprocessing.MinMaxScaler()
-	st_scaler = preprocessing.StandardScaler().fit(x_)	
+
+	index = path[path.rfind('_')+1:path.rfind('.')]
+	dirs = path[0:path.rfind('/')+1]
+	y_ = pd.read_csv(dirs+'file_'+index+'.csv')
+	y_ = y_.values
+	y_ = np.delete(y_,0,axis=1)
+	#print "y element:",y_[:10]
+	#mm_scaler = preprocessing.MinMaxScaler()
+	st_scaler = preprocessing.StandardScaler().fit(data_)
+	x_ = st_scaler.transform(data_)
+	d_size = x_.shape[0]/TimeSlice*TimeSlice
+	x_ = np.reshape(x_[0:d_size], (x_.shape[0]/TimeSlice,TimeSlice*x_.shape[1]))
+	print "x's shape",x_.shape, "y's shape",y_.shape	
 	#x_ = mm_scaler.fit_transform(x_)	
-	x_ = st_scaler.transform(x_)
-	train_size = int(len(x_)*0.8)
+	#x_ = st_scaler.transform(x_)
+	#x_ = np.reshape(x_, (x_.shape[0]/20,20,x_.shape[1]))
+	train_size = int(len(x_)*1)
+	if no_separate:
+	    return x_,y_,None,None
 	x_train = x_[0:train_size]
 	y_train = y_[0:train_size]
 	x_test = x_[train_size:]
