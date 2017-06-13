@@ -37,6 +37,34 @@ def generator_from_path(path,file_set):
 	        for i in range(0,Y.shape[0]-steps,steps):
 	            yield(X[i:i+steps],Y[i:i+steps])
 
+def load_test(path,file_set):
+    f_csv_list = []
+    for parent, dirnames, filenames in os.walk(path):
+        for p_inx in file_set:
+	    for f in filenames:
+		if f[f.rfind('_')+1:f.rfind('.')]==str(p_inx) and f.find('TK')>=0:
+	            f_csv_list.append(f)
+	print f_csv_list
+	X_train=[]
+	X_group=[]
+	Y_train=[]
+	for f_csv in f_csv_list:
+		print "reading file: "+f_csv
+		X_g,Y,x_none,y_none = load_data_grouped(path+f_csv,True)
+		X,Y,x_none,y_none = load_data(path+f_csv,True)
+		print "processing file: "+f_csv
+		if X_train == []:
+			X_train = X
+			Y_train = Y
+			X_group = X_g
+			continue
+		X_train=np.vstack((X_train,X))
+		Y_train=np.vstack((Y_train,Y))
+		X_group=np.vstack((X_group,X_g))
+	return X_train,X_group,Y_train
+
+	
+	
 #no_separate: True for no separate it into train and test parts
 def load_data(path,no_separate):
 	df = pd.read_csv(path)
@@ -67,6 +95,9 @@ def load_data(path,no_separate):
 	x_ = st_scaler.transform(data_)
 	d_size = x_.shape[0]/TimeSlice*TimeSlice
 	x_ = np.reshape(x_[0:d_size], (x_.shape[0]/TimeSlice,TimeSlice,x_.shape[1]))
+	bias=x_.shape[0]-y_.shape[0]
+	if bias>0:
+		x_=x_[:-bias]
 	print "x's shape",x_.shape, "y's shape",y_.shape	
 	#x_ = mm_scaler.fit_transform(x_)	
 	#x_ = st_scaler.transform(x_)
@@ -81,7 +112,7 @@ def load_data(path,no_separate):
 	
 	return x_train,y_train,x_test,y_test
 
-def generator_from_path_group(path,file_set,svm=False,test=False):
+def generator_from_path_group(path,file_set,svm=False,sgd=False,test=False):
     steps = 32
     steps_2=500
     count = 0
@@ -102,6 +133,21 @@ def generator_from_path_group(path,file_set,svm=False,test=False):
 			yield(np.array(X),np.array(Y))
 
 	elif svm == True:
+		X_train=[]
+		Y_train=[]
+		for f_csv in f_csv_list:
+			print "reading file: "+f_csv
+			X,Y,x_none,y_none = load_data_grouped(path+f_csv,True)
+			print "processing file: "+f_csv
+			if X_train == []:
+				X_train = X
+				Y_train = Y
+				continue
+			X_train=np.vstack((X_train,X))
+			Y_train=np.vstack((Y_train,Y))
+		yield(np.array(X_train),np.array(Y_train).ravel())
+
+	elif sgd == True:
 		for f_csv in f_csv_list:
 			print "reading file: "+f_csv
 			X,Y,x_none,y_none = load_data_grouped(path+f_csv,True)
@@ -140,6 +186,9 @@ def load_data_grouped(path,no_separate):
 	x_ = st_scaler.transform(data_)
 	d_size = x_.shape[0]/TimeSlice*TimeSlice
 	x_ = np.reshape(x_[0:d_size], (x_.shape[0]/TimeSlice,TimeSlice*x_.shape[1]))
+	bias=x_.shape[0]-y_.shape[0]
+	if bias>0:
+		x_=x_[:-bias]
 	print "x's shape",x_.shape, "y's shape",y_.shape	
 	#x_ = mm_scaler.fit_transform(x_)	
 	#x_ = st_scaler.transform(x_)

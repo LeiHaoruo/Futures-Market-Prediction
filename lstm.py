@@ -15,19 +15,19 @@ def lstm_with_generator(numFile):
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='rmsprop',metrics=['accuracy'])
 
-    model.fit_generator(data_proc.generator_from_path("marketing_data/m0000/", file_set = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]), steps_per_epoch=6500, epochs=15, validation_data =
-         data_proc.generator_from_path("marketing_data/m0000/", [22,23]), validation_steps = 600)
+    model.fit_generator(data_proc.generator_from_path("marketing_data/m0000/", file_set = [3,4,5,6,7,8]), steps_per_epoch=1970, epochs=15, validation_data =
+         data_proc.generator_from_path("marketing_data/m0000/", [9]), validation_steps = 378)
     #res = model.evaluate_generator(data_proc.generator_from_path("marketing_data/m0000/", [14]), steps=300)
     #print ("score:",res[0])
     #print ("acc",res[1])
 
-    model.save('my_model.h5')  # creates a HDF5 file 'my_model.h5'
+    model.save('lstm.h5')  # creates a HDF5 file 'my_model.h5'
     del model  # deletes the existing model
 
     # returns a compiled model
     # identical to the previous one
-    model = load_model('my_model.h5')
-    res = model.evaluate_generator(data_proc.generator_from_path("marketing_data/m0000/", [22,23]), steps=600)
+    model = load_model('lstm.h5')
+    res = model.evaluate_generator(data_proc.generator_from_path("marketing_data/m0000/", [9]), steps=378)
     print ("score:",res[0])
     print ("acc",res[1])
 
@@ -44,6 +44,15 @@ def lstm_train(X_train,Y_train,X_test,Y_test):
 	res = model.evaluate(X_test, Y_test, batch_size=16)
 	print ("score:",res[0])
 	print ("acc",res[1])
+
+def lstm_predict(X_test):
+	model = load_model('lstm.h5')
+	'''res = model.predict(X_test)
+	label=model.predict_classes(X_test)
+	res=np.hstack((res,label))'''
+	res=model.predict_classes(X_test)
+	return res
+
 
 if __name__=='__main__':
 	lstm_with_generator(5)

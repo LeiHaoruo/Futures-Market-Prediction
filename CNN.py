@@ -22,19 +22,24 @@ def cnn_train():
 	              optimizer='rmsprop',
 	              metrics=['accuracy'])
 
-	model.fit_generator(data_proc.generator_from_path("marketing_data/m0000/", file_set = [1,2,3,4]), steps_per_epoch=1000, epochs=15, validation_data =
-         data_proc.generator_from_path("marketing_data/m0000/", [5]), validation_steps = 200)
+	model.fit_generator(data_proc.generator_from_path("marketing_data/m0000/", file_set = [3,4,5,6,7,8]), steps_per_epoch=1970, epochs=15, validation_data =
+         data_proc.generator_from_path("marketing_data/m0000/", [9]), validation_steps = 378)
 	model.save('cnn.h5')  # creates a HDF5 file 'cnn.h5'
 	del model  # deletes the existing model
 
 	model = load_model('cnn.h5')
-	res = model.evaluate_generator(data_proc.generator_from_path("marketing_data/m0000/", [5]), steps=200)
+	res = model.evaluate_generator(data_proc.generator_from_path("marketing_data/m0000/", [9]), steps=378)
 	print ("score:",res[0])
 	print ("acc",res[1])
 
 	'''model.fit(x_train, y_train, batch_size=16, epochs=10)
 	score = model.evaluate(x_test, y_test, batch_size=16)
 	print score'''
+
+def cnn_predict(X_test):
+	model = load_model('cnn.h5')
+	res = model.predict_classes(X_test)
+	return res
 
 if __name__=='__main__':
 	#x_train,y_train,x_test,y_test = data_proc.load_data('TK_m0000[s20170404 00205000_e20170414 00153000]20170410_1755_46.csv')
